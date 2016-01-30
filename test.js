@@ -18,11 +18,13 @@ var actuals = {
     'z => {\n  var foo = 1\n  return z * z}',
     '(j, k) => {\n  var foo = 1\n  return j + k}',
     '(a, b) => a * b',
-    'x => x * 2 * x'
+    'x => x * 2 * x',
+    '(results) => {\n  return results.failed > 0;\n}'
   ],
   regulars: [
     'function named (a, b, cb) {\n  var foo = 1\n  cb(null, a * b)\n  }',
-    'function (x, y) {\n  var z = 2\n  return x + y + z)\n  }'
+    'function (x, y) {\n  var z = 2\n  return x + y + z)\n  }',
+    'function (results) {\n  return results.failed > 0;\n}'
   ],
   specials: [
     'function named(a, b, cb) {\n  var foo = 1\n  cb(null, a * b)\n  }',
@@ -60,6 +62,12 @@ var expected = {
     args: ['x'],
     body: 'x * 2 * x',
     value: 'x => x * 2 * x'
+  }, {
+    name: 'anonymous',
+    params: 'results',
+    args: [ 'results' ],
+    body: '\n  return results.failed > 0;\n',
+    value: 'function (results) {\n  return results.failed > 0;\n}'
   }],
   regulars: [{
     name: 'named',
@@ -73,6 +81,12 @@ var expected = {
     args: ['x', 'y'],
     body: '\n  var z = 2\n  return x + y + z)\n  ',
     value: 'function (x, y) {\n  var z = 2\n  return x + y + z)\n  }'
+  }, {
+    name: 'anonymous',
+    params: 'results',
+    args: [ 'results' ],
+    body: '\n  return results.failed > 0;\n',
+    value: 'function (results) {\n  return results.failed > 0;\n}'
   }]
 }
 
@@ -132,4 +146,3 @@ test('should not fails to get .body when something after close curly (issue#3)',
   test.strictEqual(actual.body, 'return a * 2')
   done()
 })
-

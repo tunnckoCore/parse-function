@@ -6,7 +6,6 @@
  */
 
 'use strict'
-
 var defineProp = require('define-property')
 
 /**
@@ -41,138 +40,169 @@ var defineProp = require('define-property')
  * @return {Object} with `name`, `args`, `params` and `body` properties
  * @api public
  */
-module.exports = function parseFunction (val) {
-  var type = typeof val
-  if (type !== 'string' && type !== 'function') {
-    return hiddens(defaults(), val, '', false)
+
+module.exports = (function () {
+  var SPACE = 32           // ` `
+  var EQUALS = 61          // `=`
+  var GREATER_THAN = 62    // `>`
+  var OPEN_PAREN = 40      // `(`
+  var CLOSE_PAREN = 41     // `)`
+  var OPEN_CURLY = 123     // `{`
+  var CLOSE_CURLY = 125    // `}`
+
+  function parseFunction (val) {
+    var type = typeof val
+    if (type !== 'string' && type !== 'function') {
+      return hiddens(defaults(), val, '', false)
+    }
+
+    var orig = val
+
+    if (type === 'function') {
+      val = Function.prototype.toString.call(val)
+    }
+
+    return hiddens(walk(val), orig, val, true)
   }
-  var orig = val
-  if (type === 'function') {
-    val = Function.prototype.toString.call(val)
+
+  return parseFunction
+
+  /**
+   * String walker
+   *
+   * @method walk
+   * @param  {String} `str`
+   * @return {Object}
+   * @api private
+   */
+
+  function walk (str) {
+    str = str.replace(/\){/g, ') {') // tweak
+    var i = 0
+    var j = 0
+    var len = str.length
+    var parts = ['']
+    var info = {hasParen: false, hasCurly: false, hasArrow: false}
+    var key = ''
+    var ch = ''
+    var nch = ''
+
+    while (i < len) {
+      key = str[i]
+      ch = key.charCodeAt(0)
+      if (ch === EQUALS) {
+        nch = str.charCodeAt(i + 1)
+        if (nch === GREATER_THAN) {
+          info.hasArrow = true
+          info.startArrow = info.startArrow || j
+        }
+      }
+      if (ch === OPEN_CURLY) {
+        info.hasCurly = true
+        info.openCurly = info.openCurly || i
+        info.startCurly = info.startCurly || j
+      } else if (ch === CLOSE_CURLY) {
+        info.closeCurly = info.closeCurly || i
+        info.endCurly = info.endCurly || j
+      } else if (ch === OPEN_PAREN) {
+        info.hasParen = true
+        info.openParen = info.openParen || i
+        info.startParen = info.startParen || j
+      } else if (ch === CLOSE_PAREN) {
+        info.closeParen = info.closeParen || i
+        info.endParen = info.endParen || j + 1
+      }
+      if (ch === SPACE) {
+        info.firstSpace = info.firstSpace || i
+        parts.push(' ')
+        j++
+      } else {
+        parts[j] += key
+      }
+      i++
+    }
+    info._value = str
+    info = build(info, parts)
+    return info
   }
 
-  return hiddens(walk(val), orig, val, true)
-}
+  /**
+   * Build needed object from info
+   *
+   * @method build
+   * @param  {Object} `info`
+   * @param  {Array} `parts`
+   * @return {Object}
+   * @api private
+   */
 
-var SPACE = 32 // ` `
-var GREATER_THAN = 62 // `>`
-var OPEN_PAREN = 40 // `(`
-var CLOSE_PAREN = 41 // `)`
-var OPEN_CURLY = 123 // `{`
-var CLOSE_CURLY = 125 // `}`
-
-/**
- * String walker
- *
- * @param  {String} `str`
- * @return {Object}
- */
-function walk (str) {
-  str = str.replace('){', ') {') // tweak
-  var i = 0
-  var j = 0
-  var len = str.length
-  var parts = ['']
-  var info = {hasParen: false, hasCurly: false, hasArrow: false}
-
-  while (i < len) {
-    var key = str[i]
-    var ch = key.charCodeAt(0)
-    if (ch === GREATER_THAN) {
-      info.hasArrow = true
-      info.startArrow = info.startArrow || j
-    }
-    if (ch === OPEN_CURLY) {
-      info.hasCurly = true
-      info.openCurly = info.openCurly || i
-      info.startCurly = info.startCurly || j
-    }
-    if (ch === CLOSE_CURLY) {
-      info.closeCurly = info.closeCurly || i
-      info.endCurly = info.endCurly || j
-    }
-    if (ch === OPEN_PAREN) {
-      info.hasParen = true
-      info.openParen = info.openParen || i
-      info.startParen = info.startParen || j
-    }
-    if (ch === CLOSE_PAREN) {
-      info.closeParen = info.closeParen || i
-      info.endParen = info.endParen || j + 1
-    }
-    if (ch === SPACE) {
-      info.firstSpace = info.firstSpace || i
-      parts.push(' ')
-      j++
-    } else {
-      parts[j] += key
-    }
-    i++
-  }
-  info._value = str
-  info = build(info, parts)
-  return info
-}
-
-/**
- * Build needed object from info
- *
- * @param  {Object} `info`
- * @param  {Array} `parts`
- * @return {Object}
- */
-function build (info, parts) {
-  var data = {}
-
-  if (info.hasParen) {
-    if (info.startParen >= 1) {
-      var last = info.openParen - parts[info.startParen - 1].length
-      data.name = parts[1].slice(1, last)
-    } else {
-      data.name = info.hasArrow ? 'anonymous' : parts[1].trim()
-    }
-    if (info.startParen === 0) {
-      data.name = 'anonymous'
-    }
-    data.name = data.name.length && data.name || 'anonymous'
-  } else {
-    data.name = data.name || 'anonymous'
-    data.params = parts[0]
-    data.args = [parts[0]]
-  }
-  if (info.hasArrow) {
-    data.body = parts.slice(info.startArrow + 1).join('').trim()
-    data.body = info.hasCurly ? data.body.slice(1, data.body.lastIndexOf('}')) : data.body
+  function build (info, parts) {
+    var data = {}
 
     if (info.hasParen) {
-      data.params = parts.slice(0, info.startArrow).join('').slice(1, -1)
+      if (info.startParen >= 1) {
+        var last = info.openParen - parts[info.startParen - 1].length
+        data.name = parts[1].slice(1, last)
+      } else {
+        data.name = info.hasArrow ? 'anonymous' : parts[1].trim()
+      }
+      if (info.startParen === 0) {
+        data.name = 'anonymous'
+      }
+      data.name = data.name.length && data.name || 'anonymous'
+    } else {
+      data.name = data.name || 'anonymous'
+      data.params = parts[0]
+      data.args = [parts[0]]
+    }
+    if (info.hasArrow) {
+      data.body = parts.slice(info.startArrow + 1).join('').trim()
+      data.body = info.hasCurly ? data.body.slice(1, data.body.lastIndexOf('}')) : data.body
+
+      if (info.hasParen) {
+        data.params = parts.slice(0, info.startArrow).join('').slice(1, -1)
+        data.args = data.params.split(/\,\s*/).filter(Boolean)
+      }
+    } else {
+      data.body = parts.slice(info.startCurly).join('').trim()
+      data.body = data.body.slice(1, data.body.lastIndexOf('}'))
+      data.params = info._value.slice(info.openParen + 1, info.closeParen)
       data.args = data.params.split(/\,\s*/).filter(Boolean)
     }
-  } else {
-    data.body = parts.slice(info.startCurly).join('').trim()
-    data.body = data.body.slice(1, data.body.lastIndexOf('}'))
-    data.params = info._value.slice(info.openParen + 1, info.closeParen)
-    data.args = data.params.split(/\,\s*/).filter(Boolean)
+    return data
   }
 
-  return data
-}
+  /**
+   * @method defaults
+   * @return {Object}
+   * @api private
+   */
 
-function defaults () {
-  return {
-    name: 'anonymous',
-    body: '',
-    args: [],
-    params: ''
+  function defaults () {
+    return {
+      name: 'anonymous',
+      body: '',
+      args: [],
+      params: ''
+    }
   }
-}
 
-function hiddens (data, orig, val, valid) {
-  defineProp(data, 'orig', orig)
-  defineProp(data, 'value', val)
-  defineProp(data, 'arguments', data.args)
-  defineProp(data, 'parameters', data.params)
-  defineProp(data, 'valid', valid)
-  defineProp(data, 'invalid', !valid)
-  return data
-}
+  /**
+   * @method hiddens
+   * @param {Object} data
+   * @param {Object} orig
+   * @param {*} val
+   * @param {Boolean} valid
+   * @api private
+   */
+
+  function hiddens (data, orig, val, valid) {
+    defineProp(data, 'orig', orig)
+    defineProp(data, 'value', val)
+    defineProp(data, 'arguments', data.args)
+    defineProp(data, 'parameters', data.params)
+    defineProp(data, 'valid', valid)
+    defineProp(data, 'invalid', !valid)
+    return data
+  }
+})()
