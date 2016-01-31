@@ -54,12 +54,13 @@ module.exports = function parseFunction (val) {
   return hiddens(walk(val), orig, val, true)
 }
 
-var SPACE = 32 // ` `
-var GREATER_THAN = 62 // `>`
-var OPEN_PAREN = 40 // `(`
-var CLOSE_PAREN = 41 // `)`
-var OPEN_CURLY = 123 // `{`
-var CLOSE_CURLY = 125 // `}`
+var SPACE = 32           // ` `
+var EQUALS = 61          // `=`
+var GREATER_THAN = 62    // `>`
+var OPEN_PAREN = 40      // `(`
+var CLOSE_PAREN = 41     // `)`
+var OPEN_CURLY = 123     // `{`
+var CLOSE_CURLY = 125    // `}`
 
 /**
  * String walker
@@ -74,13 +75,17 @@ function walk (str) {
   var len = str.length
   var parts = ['']
   var info = {hasParen: false, hasCurly: false, hasArrow: false}
-
+  var nch = ''
+  var ch = '';
   while (i < len) {
     var key = str[i]
-    var ch = key.charCodeAt(0)
-    if (ch === GREATER_THAN) {
-      info.hasArrow = true
-      info.startArrow = info.startArrow || j
+    ch = key.charCodeAt(0)
+    if (ch === EQUALS) {
+      nch = str.charCodeAt(i + 1)
+      if (nch === GREATER_THAN) {
+        info.hasArrow = true
+        info.startArrow = info.startArrow || j
+      }
     }
     if (ch === OPEN_CURLY) {
       info.hasCurly = true
