@@ -10,7 +10,9 @@
 'use strict'
 
 const test = require('mukla')
+const acorn = require('acorn')
 const forIn = require('for-in')
+const clone = require('clone-deep')
 const parseFunction = require('./index')
 
 const actuals = {
@@ -33,151 +35,228 @@ const actuals = {
     '(b, callback, ...restArgs) => {callback(null, b + 3)}',
     '(c) => {return c * 3}',
     '(...restArgs) => {return 321}',
-    '() => {}'
-    // '(a) => a * 3 * a',
-    // 'd => d * 3 * d',
-    // 'e => {return e * 3 * e}',
-    // '(a, b) => a + 3 + b',
-    // '(x, y, ...restArgs) => console.log({ value: x * y })'
+    '() => {}',
+    '(a) => a * 3 * a',
+    'd => d * 355 * d',
+    'e => {return e + 5235 / e}',
+    '(a, b) => a + 3 + b',
+    '(x, y, ...restArgs) => console.log({ value: x * y })'
   ]
-  // asyncs: [
-  //   'async function (a = {foo: "ba)r", baz: 123}, cb, ...restArgs) {return a * 3}',
-  //   'async function (b, callback, ...restArgs) {callback(null, b + 3)}',
-  //   'async function (c) {return c * 3}',
-  //   'async function (...restArgs) {return 321}',
-  //   'async function () {}',
-  //   'async function namedFn (a = {foo: "ba)r", baz: 123}, cb, ...restArgs) {return a * 3}',
-  //   'async function namedFn (b, callback, ...restArgs) {callback(null, b + 3)}',
-  //   'async function namedFn (c) {return c * 3}',
-  //   'async function namedFn (...restArgs) {return 321}',
-  //   'async function namedFn () {}',
-  //   'async (a = {foo: "ba)r", baz: 123}, cb, ...restArgs) {return a * 3}',
-  //   'async (b, callback, ...restArgs) {callback(null, b + 3)}',
-  //   'async (c) {return c * 3}',
-  //   'async (...restArgs) {return 321}',
-  //   'async () {}',
-  //   'async (a) => a * 3 * a',
-  //   'async (a, b) => a + 3 + b',
-  //   'async (x, y, ...restArgs) => console.log({ value: x * y })'
-  // ]
 }
+
+/**
+ * Merge all into one
+ * and prepend `async` keyword
+ * before each function
+ */
+
+actuals.asyncs = actuals.regulars
+  .concat(actuals.named)
+  .concat(actuals.arrows)
+  .map((item) => {
+    return `async ${item}`
+  })
+
+const regulars = [{
+  name: 'anonymous',
+  params: 'a, cb, restArgs',
+  args: ['a', 'cb', 'restArgs'],
+  body: 'return a * 3',
+  defaults: { a: '{foo: "ba)r", baz: 123}', cb: undefined, restArgs: undefined }
+}, {
+  name: 'anonymous',
+  params: 'b, callback, restArgs',
+  args: ['b', 'callback', 'restArgs'],
+  body: 'callback(null, b + 3)',
+  defaults: { b: undefined, callback: undefined, restArgs: undefined }
+}, {
+  name: 'anonymous',
+  params: 'c',
+  args: ['c'],
+  body: 'return c * 3',
+  defaults: { c: undefined }
+}, {
+  name: 'anonymous',
+  params: 'restArgs',
+  args: ['restArgs'],
+  body: 'return 321',
+  defaults: { restArgs: undefined }
+}, {
+  name: 'anonymous',
+  params: '',
+  args: [],
+  body: '',
+  defaults: {}
+}]
+
+/**
+ * All of the regular functions
+ * variants plus few more
+ */
+
+const arrows = clone(regulars).concat([{
+  name: 'anonymous',
+  params: 'a',
+  args: ['a'],
+  body: 'a * 3 * a',
+  defaults: { a: undefined }
+}, {
+  name: 'anonymous',
+  params: 'd',
+  args: ['d'],
+  body: 'd * 355 * d',
+  defaults: { d: undefined }
+}, {
+  name: 'anonymous',
+  params: 'e',
+  args: ['e'],
+  body: 'return e + 5235 / e',
+  defaults: { e: undefined }
+}, {
+  name: 'anonymous',
+  params: 'a, b',
+  args: ['a', 'b'],
+  body: 'a + 3 + b',
+  defaults: { a: undefined, b: undefined }
+}, {
+  name: 'anonymous',
+  params: 'x, y, restArgs',
+  args: ['x', 'y', 'restArgs'],
+  body: 'console.log({ value: x * y })',
+  defaults: { x: undefined, y: undefined, restArgs: undefined }
+}])
+
+/**
+ * All of the named, but
+ * with different name
+ */
+
+const named = clone(regulars).map((item) => {
+  item.name = 'namedFn'
+  return item
+})
 
 const expected = {
-  regulars: [{
-    name: 'anonymous',
-    params: 'a, cb, restArgs',
-    args: ['a', 'cb', 'restArgs'],
-    body: 'return a * 3',
-    defaults: { a: '{foo: "ba)r", baz: 123}', cb: undefined, restArgs: undefined }
-  }, {
-    name: 'anonymous',
-    params: 'b, callback, restArgs',
-    args: ['b', 'callback', 'restArgs'],
-    body: 'callback(null, b + 3)',
-    defaults: { b: undefined, callback: undefined, restArgs: undefined }
-  }, {
-    name: 'anonymous',
-    params: 'c',
-    args: ['c'],
-    body: 'return c * 3',
-    defaults: { c: undefined }
-  }, {
-    name: 'anonymous',
-    params: 'restArgs',
-    args: ['restArgs'],
-    body: 'return 321',
-    defaults: { restArgs: undefined }
-  }, {
-    name: 'anonymous',
-    params: '',
-    args: [],
-    body: '',
-    defaults: {}
-  }],
-  named: [{
-    name: 'namedFn',
-    params: 'a, cb, restArgs',
-    args: ['a', 'cb', 'restArgs'],
-    body: 'return a * 3',
-    defaults: { a: '{foo: "ba)r", baz: 123}', cb: undefined, restArgs: undefined }
-  }, {
-    name: 'namedFn',
-    params: 'b, callback, restArgs',
-    args: ['b', 'callback', 'restArgs'],
-    body: 'callback(null, b + 3)',
-    defaults: { b: undefined, callback: undefined, restArgs: undefined }
-  }, {
-    name: 'namedFn',
-    params: 'c',
-    args: ['c'],
-    body: 'return c * 3',
-    defaults: { c: undefined }
-  }, {
-    name: 'namedFn',
-    params: 'restArgs',
-    args: ['restArgs'],
-    body: 'return 321',
-    defaults: { restArgs: undefined }
-  }, {
-    name: 'namedFn',
-    params: '',
-    args: [],
-    body: '',
-    defaults: {}
-  }],
-  arrows: [{
-    name: 'anonymous',
-    params: 'a, cb, restArgs',
-    args: ['a', 'cb', 'restArgs'],
-    body: 'return a * 3',
-    defaults: { a: '{foo: "ba)r", baz: 123}', cb: undefined, restArgs: undefined }
-  }, {
-    name: 'anonymous',
-    params: 'b, callback, restArgs',
-    args: ['b', 'callback', 'restArgs'],
-    body: 'callback(null, b + 3)',
-    defaults: { b: undefined, callback: undefined, restArgs: undefined }
-  }, {
-    name: 'anonymous',
-    params: 'c',
-    args: ['c'],
-    body: 'return c * 3',
-    defaults: { c: undefined }
-  }, {
-    name: 'anonymous',
-    params: 'restArgs',
-    args: ['restArgs'],
-    body: 'return 321',
-    defaults: { restArgs: undefined }
-  }, {
-    name: 'anonymous',
-    params: '',
-    args: [],
-    body: '',
-    defaults: {}
-  }]
+  regulars: regulars,
+  named: named,
+  arrows: arrows,
+  asyncs: regulars.concat(named).concat(arrows)
 }
 
-forIn(actuals, (values, key) => {
-  values.forEach((val, i) => {
-    const actual = parseFunction(val)
-    const expect = expected[key === 'named' ? 'regulars' : key][i]
+let testsCount = 1
 
-    if (key === 'named') {
-      expect.name = 'namedFn'
-    }
+/**
+ * Factory for DRY, we run all tests
+ * over two available parsers - one
+ * is the default `babylon`, second is
+ * the `acorn.parse` method.
+ */
 
-    const value = actual.orig.replace('____foo$1o__i3n8v$al4i1d____', '')
+function factory (parserName, parseFn) {
+  forIn(actuals, (values, key) => {
+    values.forEach((code, i) => {
+      const actual = parseFn(code)
+      const expect = expected[key][i]
+      const value = actual.orig.replace('____foo$1o__i3n8v$al4i1d____', '')
 
-    test(value, (done) => {
-      test.strictEqual(actual.valid, true)
-      test.strictEqual(actual.name, expect.name)
-      test.strictEqual(actual.body, expect.body)
-      test.strictEqual(actual.params, expect.params)
-      test.deepEqual(actual.args, expect.args)
-      test.deepEqual(actual.defaults, expect.defaults)
-      test.ok(actual.orig)
-      done()
+      test(`#${testsCount++} - ${parserName} - ${value}`, (done) => {
+        test.strictEqual(actual.valid, true)
+        test.strictEqual(actual.name, expect.name)
+        test.strictEqual(actual.body, expect.body)
+        test.strictEqual(actual.params, expect.params)
+        test.deepEqual(actual.args, expect.args)
+        test.deepEqual(actual.defaults, expect.defaults)
+        test.ok(actual.orig)
+        done()
+      })
     })
+  })
+
+  test(`#${testsCount++} - ${parserName} - should return object with default values when invalid`, function (done) {
+    var actual = parseFn(123456)
+
+    test.strictEqual(actual.valid, false)
+    test.strictEqual(actual.orig, '')
+    test.strictEqual(actual.name, 'anonymous')
+    test.strictEqual(actual.body, '')
+    test.strictEqual(actual.params, '')
+    test.deepEqual(actual.args, [])
+    done()
+  })
+
+  test(`#${testsCount++} - ${parserName} - should have '.valid' and few '.is*'' hidden properties`, function (done) {
+    var actual = parseFn([1, 2, 3])
+
+    test.strictEqual(actual.valid, false)
+    test.strictEqual(actual.isArrow, false)
+    test.strictEqual(actual.isAsync, false)
+    test.strictEqual(actual.isNamed, false)
+    test.strictEqual(actual.isAnonymous, false)
+    test.strictEqual(actual.isGenerator, false)
+    test.strictEqual(actual.isExpression, false)
+    done()
+  })
+
+  test(`#${testsCount++} - ${parserName} - should not fails to get .body when something after close curly (issue#3)`, function (done) {
+    var actual = parseFn('function (a) {return a * 2} sa')
+    test.strictEqual(actual.body, 'return a * 2')
+    done()
+  })
+
+  test(`#${testsCount++} - ${parserName} - should work when comment in arguments (see #11)`, function (done) {
+    var actual = parseFn('function (/* done */) { return 123 }')
+    test.strictEqual(actual.params, '')
+    test.strictEqual(actual.body, ' return 123 ')
+
+    var res = parseFn('function (foo/* done */, bar) { return 123 }')
+    test.strictEqual(res.params, 'foo, bar')
+    test.strictEqual(res.body, ' return 123 ')
+    done()
+  })
+
+  test(`#${testsCount++} - ${parserName} - should support to parse generator functions`, function (done) {
+    var actual = parseFn('function * named (abc) { return abc + 123 }')
+    test.strictEqual(actual.name, 'named')
+    test.strictEqual(actual.params, 'abc')
+    test.strictEqual(actual.body, ' return abc + 123 ')
+    done()
+  })
+
+  test(`#${testsCount++} - ${parserName} - should support to parse async functions (ES2016)`, function (done) {
+    var actual = parseFn('async function foo (bar) { return bar }')
+    test.strictEqual(actual.name, 'foo')
+    test.strictEqual(actual.params, 'bar')
+    test.strictEqual(actual.body, ' return bar ')
+    done()
+  })
+
+  test(`#${testsCount++} - ${parserName} - should parse a real function which is passed`, function (done) {
+    var actual = parseFn(function fooBar (a, bc) { return a + bc })
+    test.strictEqual(actual.name, 'fooBar')
+    test.strictEqual(actual.params, 'a, bc')
+    test.strictEqual(actual.body, ' return a + bc ')
+    done()
+  })
+}
+
+/**
+ * Actually run all the tests
+ */
+
+factory('babylon', function (code) {
+  return parseFunction(code)
+})
+
+factory('acorn', function (code) {
+  return parseFunction(code, {
+    parser: acorn.parse,
+    ecmaVersion: 2017
+  })
+})
+
+factory('acorn.parse_dammit', function (code) {
+  return parseFunction(code, {
+    parser: require('acorn/dist/acorn_loose').parse_dammit,
+    ecmaVersion: 2017
   })
 })

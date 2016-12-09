@@ -25,6 +25,7 @@ module.exports = function parseFunction (code, options) {
   const body = ast.program && ast.program.body ? ast.program.body : ast.body
 
   body.forEach((node) => {
+    /* istanbul ignore next */
     if (node.type !== 'ExpressionStatement' && node.type !== 'FunctionDeclaration') {
       return
     }
@@ -99,9 +100,7 @@ function visitArrows (node, result) {
 
 function visitFunctions (node, result) {
   if (node.type === 'FunctionDeclaration') {
-    result.name = node.id.start === node.id.end
-      ? 'anonymous'
-      : node.id.name
+    result.name = node.id.name
   }
 
   return node
