@@ -127,7 +127,7 @@ const arrows = clone(regulars).concat([{
 }])
 
 /**
- * All of the named, but
+ * All of the regulars, but
  * with different name
  */
 
@@ -172,8 +172,8 @@ function factory (parserName, parseFn) {
     })
   })
 
-  test(`#${testsCount++} - ${parserName} - should return object with default values when invalid`, function (done) {
-    var actual = parseFn(123456)
+  test(`#${testsCount++} - ${parserName} - should return object with default values when invalid`, (done) => {
+    const actual = parseFn(123456)
 
     test.strictEqual(actual.valid, false)
     test.strictEqual(actual.orig, '')
@@ -184,8 +184,8 @@ function factory (parserName, parseFn) {
     done()
   })
 
-  test(`#${testsCount++} - ${parserName} - should have '.valid' and few '.is*'' hidden properties`, function (done) {
-    var actual = parseFn([1, 2, 3])
+  test(`#${testsCount++} - ${parserName} - should have '.valid' and few '.is*'' hidden properties`, (done) => {
+    const actual = parseFn([1, 2, 3])
 
     test.strictEqual(actual.valid, false)
     test.strictEqual(actual.isArrow, false)
@@ -197,41 +197,41 @@ function factory (parserName, parseFn) {
     done()
   })
 
-  test(`#${testsCount++} - ${parserName} - should not fails to get .body when something after close curly (issue#3)`, function (done) {
-    var actual = parseFn('function (a) {return a * 2} sa')
+  test(`#${testsCount++} - ${parserName} - should not fails to get .body when something after close curly (issue#3)`, (done) => {
+    const actual = parseFn('function (a) {return a * 2} sa')
     test.strictEqual(actual.body, 'return a * 2')
     done()
   })
 
-  test(`#${testsCount++} - ${parserName} - should work when comment in arguments (see #11)`, function (done) {
-    var actual = parseFn('function (/* done */) { return 123 }')
+  test(`#${testsCount++} - ${parserName} - should work when comment in arguments (see #11)`, (done) => {
+    const actual = parseFn('function (/* done */) { return 123 }')
     test.strictEqual(actual.params, '')
     test.strictEqual(actual.body, ' return 123 ')
 
-    var res = parseFn('function (foo/* done */, bar) { return 123 }')
+    const res = parseFn('function (foo/* done */, bar) { return 123 }')
     test.strictEqual(res.params, 'foo, bar')
     test.strictEqual(res.body, ' return 123 ')
     done()
   })
 
-  test(`#${testsCount++} - ${parserName} - should support to parse generator functions`, function (done) {
-    var actual = parseFn('function * named (abc) { return abc + 123 }')
+  test(`#${testsCount++} - ${parserName} - should support to parse generator functions`, (done) => {
+    const actual = parseFn('function * named (abc) { return abc + 123 }')
     test.strictEqual(actual.name, 'named')
     test.strictEqual(actual.params, 'abc')
     test.strictEqual(actual.body, ' return abc + 123 ')
     done()
   })
 
-  test(`#${testsCount++} - ${parserName} - should support to parse async functions (ES2016)`, function (done) {
-    var actual = parseFn('async function foo (bar) { return bar }')
+  test(`#${testsCount++} - ${parserName} - should support to parse async functions (ES2016)`, (done) => {
+    const actual = parseFn('async function foo (bar) { return bar }')
     test.strictEqual(actual.name, 'foo')
     test.strictEqual(actual.params, 'bar')
     test.strictEqual(actual.body, ' return bar ')
     done()
   })
 
-  test(`#${testsCount++} - ${parserName} - should parse a real function which is passed`, function (done) {
-    var actual = parseFn(function fooBar (a, bc) { return a + bc })
+  test(`#${testsCount++} - ${parserName} - should parse a real function which is passed`, (done) => {
+    const actual = parseFn(function fooBar (a, bc) { return a + bc })
     test.strictEqual(actual.name, 'fooBar')
     test.strictEqual(actual.params, 'a, bc')
     test.strictEqual(actual.body, ' return a + bc ')
