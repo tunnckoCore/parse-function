@@ -77,7 +77,6 @@ $ npm install && npm test
 + [codementor/tunnckoCore](https://codementor.io/tunnckoCore)
 
 ## License
-Copyright (c) Charlike Mike Reagent <@tunnckoCore> (http://i.am.charlike.online)
 {%= copyright({ start: 2016, linkify: true, prefix: 'Copyright', symbol: '©' }) %} {%= license %}
 
 ***

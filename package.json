@@ -96,6 +96,17 @@
     },
     "lint": {
       "reflinks": true
-    }
+    },
+    "reflinks": [
+      "always-done",
+      "async-done",
+      "base",
+      "commitizen",
+      "dezalgo",
+      "once",
+      "standard-version",
+      "verb",
+      "verb-generate-readme"
+    ]
   }
 }
