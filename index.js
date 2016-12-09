@@ -126,11 +126,11 @@ function visitParams (node, result) {
         : undefined
     })
     result.params = result.args.join(', ')
-  } else {
-    result.params = ''
-    result.args = []
+    return result
   }
 
+  result.params = ''
+  result.args = []
   return result
 }
 
