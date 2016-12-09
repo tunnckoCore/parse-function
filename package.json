@@ -28,6 +28,7 @@
     "commitizen": "^2.8.6",
     "coveralls": "^2.11.15",
     "cz-conventional-changelog": "^1.2.0",
+    "for-in": "^0.1.6",
     "mukla": "^0.4.8",
     "nyc": "^10.0.0",
     "pre-commit": "^1.2.0",
