@@ -20,7 +20,10 @@
     "precommit": "git add --all",
     "commit": "git-cz"
   },
-  "dependencies": {},
+  "dependencies": {
+    "babylon": "^6.14.1",
+    "define-property": "^0.2.5"
+  },
   "devDependencies": {
     "commitizen": "^2.8.6",
     "coveralls": "^2.11.15",
