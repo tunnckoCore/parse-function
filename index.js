@@ -21,7 +21,10 @@ module.exports = function parseFunction (code, options) {
     ? options.parser
     : babylon.parse
 
-  const ast = options.parser(result.orig, options)(ast.program ? ast.program : ast).body.forEach((node) => {
+  const ast = options.parser(result.orig, options)
+  const body = ast.program && ast.program.body ? ast.program.body : ast.body
+
+  body.forEach((node) => {
     if (node.type !== 'ExpressionStatement' && node.type !== 'FunctionDeclaration') {
       return
     }
