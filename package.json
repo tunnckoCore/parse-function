@@ -106,7 +106,9 @@
       "once",
       "standard-version",
       "verb",
-      "verb-generate-readme"
+      "verb-generate-readme",
+      "acorn",
+      "babylon"
     ]
   }
 }

@@ -10,6 +10,57 @@
 const babylon = require('babylon')
 const define = require('define-property')
 
+/**
+ * > Parse a function or string that contains a function,
+ * using [babylon][] or [acorn][] parsers.
+ * By default it uses `babylon`, but you can pass custom one
+ * through `options.parser` option - for example pass `.parse: acorn.parse`
+ * to force use the `acorn` parser instead.
+ *
+ * **Example**
+ *
+ * ```js
+ * const acorn = require('acorn')
+ * const acornLoose = require('acorn/dist/acorn_loose')
+ * const parseFunction = require('parse-function')
+ *
+ * const myFn = function abc (e, f, ...rest) { return 1 + e + 2 + f }
+ * const parsed = parseFunction(myFn)
+ *
+ * console.log(parsed.name) // => 'abc'
+ * console.log(parsed.body) // => ' return 1 + e + 2 + f '
+ * console.log(parsed.args) // => [ 'e', 'f', 'rest' ]
+ * console.log(parsed.params) // => 'e, f, rest'
+ *
+ * // some useful `is*` properties
+ * console.log(parsed.isNamed) // => true
+ * console.log(parsed.isArrow) // => false
+ * console.log(parsed.isAnonymous) // => false
+ * console.log(parsed.isGenerator) // => false
+ *
+ * // use `acorn` parser
+ * const someArrow = (foo, bar) => 1 * foo + bar
+ * const result = parseFunction(someArrow, {
+ *   parser: acorn.parse,
+ *   ecmaVersion: 2017
+ * })
+ *
+ * console.log(result.name) // => 'anonymous'
+ * console.log(result.body) // => '1 * foo + bar'
+ * console.log(result.args) // => [ 'foo', 'bar' ]
+ *
+ * console.log(result.isArrow) // => true
+ * console.log(result.isNamed) // => false
+ * console.log(result.isAnonymous) // => true
+ * ```
+ *
+ * @param  {Function|String} `code` function to be parsed, it can be string too
+ * @param  {Object} `options` optional, passed directly to [babylon][] or [acorn][];
+ *                            you can also pass custom `options.parser` parser
+ * @return {Object} always returns an object, check `result.valid`
+ * @api public
+ */
+
 module.exports = function parseFunction (code, options) {
   let result = getDefaults(code)
 
@@ -46,6 +97,15 @@ module.exports = function parseFunction (code, options) {
   return result
 }
 
+/**
+ * > Create default result object,
+ * and normalize incoming arguments.
+ *
+ * @param  {Function|String} `code`
+ * @return {Object} result
+ * @api private
+ */
+
 function getDefaults (code) {
   const result = {
     name: 'anonymous',
@@ -62,6 +122,16 @@ function getDefaults (code) {
   return hiddens(result, code)
 }
 
+/**
+ * > Create hidden properties into
+ * the result object.
+ *
+ * @param  {Object} `result`
+ * @param  {Function|String} code
+ * @return {Object} result
+ * @api private
+ */
+
 function hiddens (result, code) {
   define(result, 'defaults', {})
   define(result, 'orig', code || '')
@@ -76,6 +146,17 @@ function hiddens (result, code) {
   return result
 }
 
+/**
+ * > Update the result object with some
+ * useful information like is given function
+ * is async, generator or it is a FunctionExpression.
+ *
+ * @param  {Object} `node`
+ * @param  {Object} `result`
+ * @return {Object} `node`
+ * @api private
+ */
+
 function update (node, result) {
   const asyncExpr = node.expression && node.expression.async
   const genExpr = node.expression && node.expression.generator
@@ -87,6 +168,14 @@ function update (node, result) {
   return node
 }
 
+/**
+ * > Visit each arrow expression.
+ *
+ * @param  {Object} `node`
+ * @param  {Object} `result`
+ * @return {Object} `node`
+ * @api private
+ */
 function visitArrows (node, result) {
   const isArrow = node.expression.type === 'ArrowFunctionExpression'
 
@@ -98,6 +187,14 @@ function visitArrows (node, result) {
   return node
 }
 
+/**
+ * > Visit each function declaration.
+ *
+ * @param  {Object} `node`
+ * @param  {Object} `result`
+ * @return {Object} `node`
+ * @api private
+ */
 function visitFunctions (node, result) {
   if (node.type === 'FunctionDeclaration') {
     result.name = node.id.name
@@ -106,6 +203,15 @@ function visitFunctions (node, result) {
   return node
 }
 
+/**
+ * > Visit each of the params in the
+ * given function.
+ *
+ * @param  {Object} `node`
+ * @param  {Object} `result`
+ * @return {Object} `result`
+ * @api private
+ */
 function visitParams (node, result) {
   if (node.params.length) {
     node.params.forEach(function (param) {
@@ -133,6 +239,17 @@ function visitParams (node, result) {
   return result
 }
 
+/**
+ * > Gets the raw body, without the
+ * surrounding curly braces. It also preserves
+ * the whitespaces and newlines - they are original.
+ *
+ * @param  {Object} `node`
+ * @param  {Object} `result`
+ * @return {Object} `result`
+ * @api private
+ */
+
 function fixBody (node, result) {
   result.body = result.orig.slice(node.body.start, node.body.end)
 
@@ -145,6 +262,16 @@ function fixBody (node, result) {
 
   return result
 }
+
+/**
+ * > Tweak the names. Each anonymous function
+ * initially are renamed to some unique name
+ * and it is restore to be `anonymous`.
+ *
+ * @param  {Object} `result`
+ * @return {Object} `result`
+ * @api private
+ */
 
 function fixName (result) {
   // tweak throwing if anonymous function
