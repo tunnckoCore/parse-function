@@ -414,4 +414,5 @@ test('should work with an async arrow function with an `if` statement', (done) =
     args: [ 'v' ],
     params: 'v'
   })
+  done()
 })
