@@ -7,6 +7,8 @@
 
 /* eslint-disable jsdoc/require-param-description, jsdoc/check-param-names */
 
+import { parseFnParams, toValues } from 'func-args'
+
 /**
  * > Micro plugin to visit each of the params
  * in the given function and collect them into
@@ -22,31 +24,8 @@ export default (app) => (node, result) => {
     return result
   }
 
-  node.params.forEach((param) => {
-    const defaultArgsName =
-      param.type === 'AssignmentPattern' && param.left && param.left.name
-
-    const restArgName =
-      param.type === 'RestElement' && param.argument && param.argument.name
-
-    const name = param.name || defaultArgsName || restArgName
-
-    result.args.push(name)
-
-    if (param.right && param.right.type === 'SequenceExpression') {
-      let lastExpression = param.right.expressions.pop()
-
-      result.defaults[name] = result.value.slice(
-        lastExpression.start,
-        lastExpression.end
-      )
-    } else {
-      result.defaults[name] = param.right
-        ? result.value.slice(param.right.start, param.right.end)
-        : undefined
-    }
-  })
-  result.params = result.args.join(', ')
+  // @todo im not sure what style here need
+  result.params = toValues(parseFnParams(node.params)).join(', ')
 
   return result
 }
