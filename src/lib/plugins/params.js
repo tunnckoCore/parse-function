@@ -24,8 +24,10 @@ export default (app) => (node, result) => {
     return result
   }
 
+  result.args = parseFnParams(node.params);
+
   // @todo im not sure what style here need
-  result.params = toValues(parseFnParams(node.params)).join(', ')
+  result.params = toValues(result.args).join(', ')
 
   return result
 }
