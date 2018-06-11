@@ -7,7 +7,7 @@
 
 /* eslint-disable jsdoc/require-param-description, jsdoc/check-param-names */
 
-import { parseFnParams, toValues } from 'func-args'
+import { parseFnParams, toValues } from 'func-args/params'
 
 /**
  * > Micro plugin to visit each of the params

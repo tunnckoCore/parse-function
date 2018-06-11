@@ -8,7 +8,7 @@ acorn-jsx@^3.0.0:
   dependencies:
     acorn "^3.0.4"
 
-acorn@5.6.1:
+acorn@5.6.1, acorn@^5.6.1:
   version "5.6.1"
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-5.6.1.tgz#c9e50c3e3717cf897f1b071ceadbb543bbc0a8d4"
 
@@ -1676,6 +1676,12 @@ foreground-child@^1.5.3, foreground-child@^1.5.6:
 fs.realpath@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/fs.realpath/-/fs.realpath-1.0.0.tgz#1504ad2523158caa40db4a2787cb01411994ea4f"
+
+func-args@1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/func-args/-/func-args-1.0.2.tgz#4e39d8497c8bb3441900b733dfffcd73bb8091ac"
+  dependencies:
+    acorn "^5.6.1"
 
 function-arguments@^1.0.8:
   version "1.0.8"
