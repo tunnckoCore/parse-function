@@ -3,12 +3,16 @@
 </p>
 
 # parse-function [![npm version][npmv-img]][npmv-url] [![github release][github-release-img]][github-release-url] [![License][license-img]][license-url]
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FtunnckoCoreLabs%2Fparse-function.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2FtunnckoCoreLabs%2Fparse-function?ref=badge_shield)
 
 > Parse a function into an object using espree, acorn or babylon parsers. Extensible through Smart Plugins
 
 <div id="thetop"></div>
 
 You might also be interested in [hela](https://github.com/tunnckoCore/hela#readme).
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FtunnckoCoreLabs%2Fparse-function.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2FtunnckoCoreLabs%2Fparse-function?ref=badge_large)
 
 ## Quality Assurance :100:
 
@@ -499,4 +503,3 @@ _Project automation and management with [hela][] task framework._
 
 [standard-url]: https://github.com/standard/standard
 [standard-img]: https://img.shields.io/badge/code_style-standard-brightgreen.svg
-
