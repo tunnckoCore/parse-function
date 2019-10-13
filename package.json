@@ -33,7 +33,7 @@
     "define-property": "2.0.2"
   },
   "devDependencies": {
-    "acorn": "5.7.3",
+    "acorn": "7.1.0",
     "clone-deep": "4.0.1",
     "eslint-config-standard-tunnckocore": "1.0.10",
     "espree": "6.1.1",
